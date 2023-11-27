@@ -1,5 +1,5 @@
 import express from "express";
-import { login, signup } from "../controller/authController";
+import { login, protect, signup } from "../controller/authController";
 import {
   createUser,
   deleteUser,
@@ -7,7 +7,6 @@ import {
   getUser,
   updateUser,
 } from "../controller/userController";
-import { protect } from "../utils/authGuard";
 const router = express.Router();
 
 router.route("/signup").post(signup);
