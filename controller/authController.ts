@@ -22,7 +22,7 @@ export const signup = catchAsync(
     });
     const token = generateToken(String(newUser._id));
 
-    if (!token) return next(new AppError("Fail to generate token.", 404));
+    if (!token) return next(new AppError("Fail to generate token.", 401));
 
     res.status(201).json({
       status: "success",
@@ -41,7 +41,7 @@ export const login = catchAsync(
     const user = await User.findOne({ email: email }).select("+password");
 
     if (!user || !user.comparePassword(password, user.password))
-      return next(new AppError("Incorrect email or password.", 404));
+      return next(new AppError("Incorrect email or password.", 401));
 
     const token = generateToken(String(user._id));
 
