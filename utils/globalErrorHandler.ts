@@ -11,8 +11,25 @@ export const globalErrorHandler = (
   const message = err.message || "";
   const status = err.status || "fail";
 
-  res.status(statusCode).json({
-    status,
-    message,
-  });
+  if (err.name === "JsonWebTokenError") {
+    res.status(401).json({
+      status,
+      message: "Invalid token. Please log in again!",
+    });
+  } else if (err.name === "TokenExpiredError") {
+    res.status(401).json({
+      status,
+      message: "Your token has expired. Please log in again!",
+    });
+  } else if (err.isOperational) {
+    res.status(statusCode).json({
+      status,
+      message,
+    });
+  } else {
+    res.status(500).json({
+      status: "fail",
+      message: "Something went very wrong!",
+    });
+  }
 };

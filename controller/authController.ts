@@ -63,10 +63,25 @@ export const protect = catchAsync(
     )
       token = req.headers.authorization.split(" ")[1];
 
-    if (!token) return next(new AppError("You are not logged in.", 401));
+    if (!token) return next(new AppError("You are not logged in!", 401));
 
-    const decoded = jwt.verify(token, process.env.JWT_SECRET as string);
-    req.user = await User.findById((decoded as JwtPayload).id);
+    const decoded = jwt.verify(
+      token,
+      process.env.JWT_SECRET as string
+    ) as JwtPayload;
+    console.log(decoded.id);
+
+    // check if the user still exists after creating the token
+    const freshUser = await User.findById(decoded.id);
+
+    if (!freshUser)
+      return next(
+        new AppError(
+          "The user belonging to this token is no longer exists.",
+          401
+        )
+      );
+
     next();
   }
 );

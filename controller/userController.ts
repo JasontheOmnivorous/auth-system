@@ -5,10 +5,11 @@ import AppError from "./../utils/appError";
 
 export const getAllUsers = catchAsync(
   async (req: Request, res: Response, next: NextFunction) => {
-    const users = User.find();
+    const users = await User.find();
 
     res.status(200).json({
       status: "success",
+      totalUsers: users.length,
       data: users,
     });
   }
@@ -16,7 +17,7 @@ export const getAllUsers = catchAsync(
 
 export const getUser = catchAsync(
   async (req: Request, res: Response, next: NextFunction) => {
-    const user = User.findById(req.params.id);
+    const user = await User.findById(req.params.id);
 
     res.status(200).json({
       status: "success",
@@ -34,7 +35,7 @@ export const createUser = catchAsync(
       password: req.body.name,
       passwordConfirm: req.body.passwordConfirm,
     };
-    const user = User.create(validate);
+    const user = await User.create(validate);
 
     res.status(201).json({
       status: "success",
@@ -45,7 +46,7 @@ export const createUser = catchAsync(
 
 export const updateUser = catchAsync(
   async (req: Request, res: Response, next: NextFunction) => {
-    const user = User.findByIdAndUpdate(req.params.id, req.body, {
+    const user = await User.findByIdAndUpdate(req.params.id, req.body, {
       new: true,
       runValidators: true,
     });
