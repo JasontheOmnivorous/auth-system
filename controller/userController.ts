@@ -28,18 +28,19 @@ export const getUser = catchAsync(
 
 export const createUser = catchAsync(
   async (req: Request, res: Response, next: NextFunction) => {
-    const validate = {
-      name: req.body.name,
-      email: req.body.name,
-      photo: req.body.photo ? req.body.photo : "",
-      password: req.body.name,
-      passwordConfirm: req.body.passwordConfirm,
-    };
-    const user = await User.create(validate);
+    const { name, email, password, passwordConfirm } = req.body;
+    const newUser = await User.create({
+      name,
+      email,
+      password,
+      passwordConfirm,
+    });
+
+    if (!newUser) return next(new AppError("Fail to create user.", 400));
 
     res.status(201).json({
       status: "success",
-      data: user,
+      data: newUser,
     });
   }
 );
