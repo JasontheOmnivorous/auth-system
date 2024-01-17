@@ -1,7 +1,7 @@
 import { NextFunction, Request, Response } from "express";
 import { User } from "../model/userModel";
+import AppError from "../utils/appError";
 import { catchAsync } from "../utils/catchAsync";
-import AppError from "./../utils/appError";
 
 export const getAllUsers = catchAsync(
   async (req: Request, res: Response, next: NextFunction) => {
