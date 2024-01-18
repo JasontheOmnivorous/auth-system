@@ -20,6 +20,7 @@ export const signup = catchAsync(
       email: req.body.email,
       password: req.body.password,
       passwordConfirm: req.body.passwordConfirm,
+      passwordChangedAt: req.body.passwordChangedAt,
     });
     const token = generateToken(String(newUser._id));
 
@@ -69,7 +70,6 @@ export const protect = catchAsync(
       token,
       process.env.JWT_SECRET as string
     ) as JwtPayload;
-    console.log(decoded.id);
 
     // check if the user still exists after creating the token
     const freshUser = await User.findById(decoded.id);
@@ -82,6 +82,16 @@ export const protect = catchAsync(
         )
       );
 
+    if (freshUser.passwordChangedAfter(decoded.iat as number)) {
+      return next(
+        new AppError(
+          "User recently changed password. Please log in again.",
+          401
+        )
+      );
+    }
+
+    req.user = freshUser;
     next();
   }
 );

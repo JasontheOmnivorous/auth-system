@@ -28,6 +28,8 @@ export const globalErrorHandler = (
     });
   } else {
     res.status(500).json({
+      name: err.name,
+      stack: err.stack,
       status: "fail",
       message: "Something went very wrong!",
     });

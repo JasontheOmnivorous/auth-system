@@ -8,10 +8,12 @@ export interface UserType extends Document {
   photo?: string;
   password: string;
   passwordConfirm: string | undefined;
+  passwordChangedAt: Date;
   comparePassword(
     candidatePassword: string,
     password: string
   ): Promise<boolean>;
+  passwordChangedAfter(JWTTimeStamp: number): boolean;
 }
 
 const userSchema = new mongoose.Schema<UserType>({
@@ -45,6 +47,7 @@ const userSchema = new mongoose.Schema<UserType>({
       message: "Passwords are not the same.",
     },
   },
+  passwordChangedAt: Date,
 });
 
 userSchema.pre("save", async function (next) {
@@ -60,6 +63,20 @@ userSchema.methods.comparePassword = async function (
   password: string
 ) {
   return await bcrypt.compare(candidatePassword, password);
+};
+
+userSchema.methods.passwordChangedAfter = function (
+  this: UserType,
+  JWTTimeStamp: number
+) {
+  if (this.passwordChangedAt) {
+    const changedTimeStamp = Number(this.passwordChangedAt.getTime() / 1000);
+
+    // check if the user changed the password after jwt is issued (logged in or signed in)
+    return JWTTimeStamp < changedTimeStamp;
+  }
+
+  return false; // false by default
 };
 
 export const User = mongoose.model("User", userSchema);
