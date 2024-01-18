@@ -6,6 +6,7 @@ export interface UserType extends Document {
   name: string;
   email: string;
   photo?: string;
+  role: string;
   password: string;
   passwordConfirm: string | undefined;
   passwordChangedAt: Date;
@@ -31,6 +32,11 @@ const userSchema = new mongoose.Schema<UserType>({
     unique: true,
   },
   photo: String,
+  role: {
+    type: String,
+    enum: ["admin", "user"],
+    default: "user",
+  },
   password: {
     type: String,
     required: [true, "Password required."],

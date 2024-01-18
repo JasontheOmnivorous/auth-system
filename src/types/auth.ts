@@ -1,5 +1,4 @@
 import { NextFunction, Request, Response } from "express";
-import { UserType } from "../model/userModel";
 
 export type ReqHandler = (
   req: Request,
@@ -8,5 +7,7 @@ export type ReqHandler = (
 ) => Promise<void>;
 
 export interface ExtendedRequest extends Request {
-  user?: UserType | null;
+  user?: {
+    role: string;
+  };
 }
