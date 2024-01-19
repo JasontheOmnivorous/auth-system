@@ -1,3 +1,4 @@
+import cors from 'cors';
 import express, { NextFunction, Request, Response } from "express";
 import morgan from "morgan";
 import userRouter from "./route/userRoute";
@@ -5,6 +6,7 @@ import AppError from "./utils/appError";
 import { globalErrorHandler } from "./utils/globalErrorHandler";
 const app = express();
 
+app.use(cors({origin: '*'}))
 app.use(morgan("dev"));
 app.use(express.json());
 app.get("/", (req: Request, res: Response, next: NextFunction) =>
