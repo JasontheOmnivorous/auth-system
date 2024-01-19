@@ -1,4 +1,5 @@
 import bcrypt from "bcrypt";
+import crypto from "crypto";
 import mongoose, { Document } from "mongoose";
 import validator from "validator";
 
@@ -10,11 +11,17 @@ export interface UserType extends Document {
   password: string;
   passwordConfirm: string | undefined;
   passwordChangedAt: Date;
+  passwordResetToken: string;
+  // had to make this number type since ts is not happy about it
+  // but mongoDB will convert it into Date type automatically
+  // since we defined this field as Date in schema
+  passwordResetTokenExpiration: number;
   comparePassword(
     candidatePassword: string,
     password: string
   ): Promise<boolean>;
   passwordChangedAfter(JWTTimeStamp: number): boolean;
+  generatePasswordResetToken(): string;
 }
 
 const userSchema = new mongoose.Schema<UserType>({
@@ -54,6 +61,11 @@ const userSchema = new mongoose.Schema<UserType>({
     },
   },
   passwordChangedAt: Date,
+  passwordResetToken: {
+    type: String,
+    required: true,
+  },
+  passwordResetTokenExpiration: Date,
 });
 
 userSchema.pre("save", async function (next) {
@@ -83,6 +95,19 @@ userSchema.methods.passwordChangedAfter = function (
   }
 
   return false; // false by default
+};
+
+userSchema.methods.generatePasswordResetToken = function (this: UserType) {
+  const resetToken = crypto.randomBytes(32).toString("hex");
+
+  this.passwordResetToken = crypto
+    .createHash("sha256")
+    .update(resetToken)
+    .digest("hex");
+
+  this.passwordResetTokenExpiration = Date.now() + 10 * 60 * 1000;
+
+  return resetToken;
 };
 
 export const User = mongoose.model("User", userSchema);

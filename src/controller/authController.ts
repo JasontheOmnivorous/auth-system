@@ -97,6 +97,28 @@ export const protect = catchAsync(
   }
 );
 
+export const forgotPassword = catchAsync(
+  async (req: Request, res: Response, next: NextFunction) => {
+    const { email } = req.body;
+
+    if (!email) return next(new AppError("Please provide your email.", 400));
+
+    const dbUser = await User.findOne({ email });
+
+    if (!dbUser)
+      return next(new AppError("No user found with this email.", 404));
+
+    const resetToken = dbUser.generatePasswordResetToken();
+
+    await dbUser.save({ validateBeforeSave: false });
+
+    res.status(200).json({
+      status: "success",
+      resetToken,
+    });
+  }
+);
+
 export const restrictTo = (...roles: string[]) => {
   return (req: ExtendedRequest, res: Response, next: NextFunction) => {
     if (!req.user)

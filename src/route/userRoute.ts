@@ -1,5 +1,6 @@
 import express from "express";
 import {
+  forgotPassword,
   login,
   protect,
   restrictTo,
@@ -16,6 +17,7 @@ const router = express.Router();
 
 router.route("/signup").post(signup);
 router.route("/login").post(login);
+router.route("/forgot-password").post(forgotPassword);
 router.use(protect);
 router.route("/").get(getAllUsers).post(restrictTo("admin"), createUser);
 router
