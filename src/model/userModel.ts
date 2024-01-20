@@ -11,11 +11,11 @@ export interface UserType extends Document {
   password: string;
   passwordConfirm: string | undefined;
   passwordChangedAt: Date;
-  passwordResetToken: string;
+  passwordResetToken: string | undefined;
   // had to make this number type since ts is not happy about it
   // but mongoDB will convert it into Date type automatically
   // since we defined this field as Date in schema
-  passwordResetTokenExpiration: number;
+  passwordResetTokenExpiration: number | undefined;
   comparePassword(
     candidatePassword: string,
     password: string

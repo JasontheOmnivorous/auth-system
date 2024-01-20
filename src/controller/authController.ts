@@ -5,6 +5,7 @@ import { User } from "../model/userModel";
 import { ExtendedRequest } from "../types/auth";
 import AppError from "../utils/appError";
 import { catchAsync } from "../utils/catchAsync";
+import { sendEmail } from "../utils/email";
 dotenv.config({ path: "./../.env" });
 
 const generateToken = (id: string) => {
@@ -112,10 +113,35 @@ export const forgotPassword = catchAsync(
 
     await dbUser.save({ validateBeforeSave: false });
 
-    res.status(200).json({
-      status: "success",
-      resetToken,
-    });
+    const resetUrl = `${req.protocol}://${req.get(
+      "host"
+    )}/api/v1/users/reset-password/${resetToken}`;
+
+    const constructedMessage = `Forgot your password? Send a PATCH request with your new password and passwordConfirm to: ${resetUrl}.\nIf you didn't forget your password, simply ignore this message.`;
+
+    try {
+      await sendEmail({
+        email,
+        subject: "Reset password token",
+        textMessage: constructedMessage,
+      });
+
+      res.status(200).json({
+        status: "success",
+        message: "Email sent successfully!",
+      });
+    } catch (err) {
+      dbUser.passwordResetToken = undefined;
+      dbUser.passwordResetTokenExpiration = undefined;
+      dbUser.save({ validateBeforeSave: false });
+
+      return next(
+        new AppError(
+          "There was an error sending email. Please try again later.",
+          500
+        )
+      );
+    }
   }
 );
 
