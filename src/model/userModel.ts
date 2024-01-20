@@ -10,7 +10,7 @@ export interface UserType extends Document {
   role: string;
   password: string;
   passwordConfirm: string | undefined;
-  passwordChangedAt: Date;
+  passwordChangedAt: Date | number;
   passwordResetToken: string | undefined;
   // had to make this number type since ts is not happy about it
   // but mongoDB will convert it into Date type automatically
@@ -61,11 +61,15 @@ const userSchema = new mongoose.Schema<UserType>({
     },
   },
   passwordChangedAt: Date,
-  passwordResetToken: {
-    type: String,
-    required: true,
-  },
+  passwordResetToken: String,
   passwordResetTokenExpiration: Date,
+});
+
+userSchema.pre("save", function (this: UserType, next) {
+  if (!this.isModified("passwordChangedAt") || !this.isNew) return next();
+
+  this.passwordChangedAt = Date.now() - 1000;
+  next();
 });
 
 userSchema.pre("save", async function (next) {
@@ -87,7 +91,7 @@ userSchema.methods.passwordChangedAfter = function (
   this: UserType,
   JWTTimeStamp: number
 ) {
-  if (this.passwordChangedAt) {
+  if (this.passwordChangedAt instanceof Date) {
     const changedTimeStamp = Number(this.passwordChangedAt.getTime() / 1000);
 
     // check if the user changed the password after jwt is issued (logged in or signed in)

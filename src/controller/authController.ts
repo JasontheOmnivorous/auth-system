@@ -1,3 +1,4 @@
+import crypto from "crypto";
 import dotenv from "dotenv";
 import { NextFunction, Request, Response } from "express";
 import jwt, { JwtPayload } from "jsonwebtoken";
@@ -142,6 +143,42 @@ export const forgotPassword = catchAsync(
         )
       );
     }
+  }
+);
+
+export const resetPassword = catchAsync(
+  async (req: Request, res: Response, next: NextFunction) => {
+    const hashedToken = crypto
+      .createHash("sha256")
+      .update(req.params.token)
+      .digest("hex");
+
+    const dbUser = await User.findOne({
+      passwordResetToken: hashedToken,
+      passwordResetTokenExpiration: { $gt: Date.now() },
+    });
+
+    if (!dbUser)
+      return next(
+        new AppError(
+          "Your token is either expired or invalid. Please try again.",
+          400
+        )
+      );
+
+    dbUser.password = req.body.password;
+    dbUser.passwordConfirm = req.body.passwordConfirm;
+    dbUser.passwordResetToken = undefined;
+    dbUser.passwordResetTokenExpiration = undefined;
+
+    await dbUser.save();
+
+    const token = generateToken(dbUser._id);
+
+    res.status(200).json({
+      status: "success",
+      token,
+    });
   }
 );
 
