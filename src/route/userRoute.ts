@@ -6,6 +6,7 @@ import {
   resetPassword,
   restrictTo,
   signup,
+  updatePassword,
 } from "../controller/authController";
 import {
   createUser,
@@ -19,8 +20,9 @@ const router = express.Router();
 router.route("/signup").post(signup);
 router.route("/login").post(login);
 router.route("/forgot-password").post(forgotPassword);
-router.route('/reset-password/:token').patch(resetPassword)
+router.route("/reset-password/:token").patch(resetPassword);
 router.use(protect);
+router.patch("/update-my-password", updatePassword);
 router.route("/").get(getAllUsers).post(restrictTo("admin"), createUser);
 router
   .route("/:id")

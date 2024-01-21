@@ -2,7 +2,7 @@ import crypto from "crypto";
 import dotenv from "dotenv";
 import { NextFunction, Request, Response } from "express";
 import jwt, { JwtPayload } from "jsonwebtoken";
-import { User } from "../model/userModel";
+import { User, UserType } from "../model/userModel";
 import { ExtendedRequest } from "../types/auth";
 import AppError from "../utils/appError";
 import { catchAsync } from "../utils/catchAsync";
@@ -12,6 +12,28 @@ dotenv.config({ path: "./../.env" });
 const generateToken = (id: string) => {
   return jwt.sign({ id: id }, process.env.JWT_SECRET || "", {
     expiresIn: process.env.JWT_EXPIRE || "",
+  });
+};
+
+const sendToken = (
+  user: UserType,
+  statusCode: number,
+  res: Response,
+  next: NextFunction
+) => {
+  const token = generateToken(user.id);
+
+  if (!token)
+    return next(
+      new AppError(
+        "Fail to generate token. Your id probably is not working.",
+        401
+      )
+    );
+
+  res.status(statusCode).json({
+    status: "success",
+    token,
   });
 };
 
@@ -25,14 +47,8 @@ export const signup = catchAsync(
       passwordConfirm: req.body.passwordConfirm,
       passwordChangedAt: req.body.passwordChangedAt,
     });
-    const token = generateToken(String(newUser._id));
 
-    if (!token) return next(new AppError("Fail to generate token.", 401));
-
-    res.status(201).json({
-      status: "success",
-      token,
-    });
+    sendToken(newUser, 201, res, next);
   }
 );
 
@@ -48,12 +64,7 @@ export const login = catchAsync(
     if (!user || !user.comparePassword(password, user.password))
       return next(new AppError("Incorrect email or password.", 401));
 
-    const token = generateToken(String(user._id));
-
-    res.status(200).json({
-      status: "success",
-      token,
-    });
+    sendToken(user, 200, res, next);
   }
 );
 
@@ -173,12 +184,7 @@ export const resetPassword = catchAsync(
 
     await dbUser.save();
 
-    const token = generateToken(dbUser._id);
-
-    res.status(200).json({
-      status: "success",
-      token,
-    });
+    sendToken(dbUser, 200, res, next);
   }
 );
 
@@ -201,3 +207,28 @@ export const restrictTo = (...roles: string[]) => {
     next();
   };
 };
+
+export const updatePassword = catchAsync(
+  async (req: ExtendedRequest, res: Response, next: NextFunction) => {
+    const dbUser = await User.findById(req?.user?._id).select("+password");
+
+    console.log(req.body);
+    console.log("dbUser password: ", dbUser?.password);
+
+    if (!dbUser) return next(new AppError("No user found with that id.", 400));
+
+    const correctPassword = await dbUser.comparePassword(
+      req.body.passwordCurrent,
+      dbUser.password
+    );
+
+    if (!correctPassword)
+      return next(new AppError("Wrong password. Try again!", 401));
+
+    dbUser.password = req.body.password;
+    dbUser.passwordConfirm = req.body.passwordConfirm;
+    dbUser.save();
+
+    sendToken(dbUser, 200, res, next);
+  }
+);
