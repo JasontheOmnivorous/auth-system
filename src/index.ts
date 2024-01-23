@@ -8,7 +8,7 @@ import { globalErrorHandler } from "./utils/globalErrorHandler";
 const app = express();
 
 app.use(cors({ origin: "*" }));
-app.use(morgan("dev"));
+if (process.env.NODE_ENV === "development") app.use(morgan("dev"));
 
 const rateLimiter = {
   limit: 100,

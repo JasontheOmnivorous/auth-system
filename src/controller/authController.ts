@@ -1,6 +1,6 @@
 import crypto from "crypto";
 import dotenv from "dotenv";
-import { NextFunction, Request, Response } from "express";
+import { CookieOptions, NextFunction, Request, Response } from "express";
 import jwt, { JwtPayload } from "jsonwebtoken";
 import { User, UserType } from "../model/userModel";
 import { ExtendedRequest } from "../types/auth";
@@ -30,6 +30,16 @@ const sendToken = (
         401
       )
     );
+
+  const cookieOptions: CookieOptions = {
+    expires: new Date(
+      Date.now() + Number(process.env.COOKIE_EXPIRES) * 24 * 60 * 60 * 1000
+    ),
+    secure: process.env.NODE_ENV === "production",
+    httpOnly: true,
+  };
+
+  res.cookie("jwt", token, cookieOptions);
 
   res.status(statusCode).json({
     status: "success",
