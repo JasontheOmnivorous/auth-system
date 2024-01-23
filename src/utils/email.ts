@@ -1,4 +1,5 @@
 import nodemailer from "nodemailer";
+import { MailOptions } from "nodemailer/lib/json-transport";
 import { config } from "./config";
 
 interface Options {
@@ -17,7 +18,7 @@ export const sendEmail = async (options: Options) => {
     },
   });
 
-  const mailOptions = {
+  const mailOptions: MailOptions = {
     from: "Min Thant <marsjason485@gmail.com>",
     to: options.email,
     subject: options.subject,
